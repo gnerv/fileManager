@@ -2,8 +2,6 @@ package com.example.demo;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URLEncoder;
 
 import javax.servlet.http.HttpServletResponse;
@@ -16,12 +14,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.swagger.annotations.ApiOperation;
+
 @RestController
 public class FileManagerController {
 	
 	@Autowired
 	FileManagerService fileManagerService;
 
+	@ApiOperation(value="上传文件接口", notes="")
 	@PostMapping(value="/upLoadFileForSingle")
 	private FileManagerR upLoadFileForSingle(@RequestParam("file") MultipartFile file) {
 		if (file.isEmpty()) {
@@ -35,21 +36,27 @@ public class FileManagerController {
 		return FileManagerR.ok("true").put("fileManager", createAndSaveFile);
 	}
 	
-	
+	@ApiOperation(value="下载文件接口", notes="通过文件UUID值（唯一）下载文件")
 	@RequestMapping(value="/downLoadFileForSingle")
 	private FileManagerR downLoadFileForSingle(@RequestParam("uuid") String uuid, HttpServletResponse response) {
 		
 		try {
-			response.setContentType("application/octet-stream");
-			String fileName = URLEncoder.encode("1234567890呵呵呵呵额", "UTF-8");
-			response.setHeader( "Content-Disposition", "attachment;filename=" +fileName);
+			//检查文件是否存在
+			boolean checkFile = fileManagerService.checkFile(uuid);
+			if(!checkFile) {
+				return FileManagerR.ok("false");
+			}
+			//获取文件
 			File fileByUuid = fileManagerService.getFileByUuid(uuid);
+			//设置文件为直接下载 不可在线打开
+			response.setContentType("application/octet-stream");
+			//设置文件名和编码
+			String fileName = URLEncoder.encode(uuid, "UTF-8");
+			response.setHeader( "Content-Disposition", "attachment;filename=" +fileName);
+
 			FileCopyUtils.copy(new FileInputStream(fileByUuid), response.getOutputStream());
-			return FileManagerR.ok("true");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
+
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

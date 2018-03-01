@@ -31,7 +31,6 @@ public class FileManagerService implements IFileManager {
 			if (!filePath.exists()) {
 				filePath.mkdirs();
 			}
-			
 			File fileObj = new File(filePath, uuid);
 			Files.write(file.getBytes(), fileObj);
 			
@@ -39,10 +38,10 @@ public class FileManagerService implements IFileManager {
 			fileManagerModel.setName(file.getOriginalFilename());
 			fileManagerModel.setPath(path);
 			fileManagerModel.setMd5(md5DigestAsHex);
+			
 			Gson gson = new Gson();
 			String json = gson.toJson(fileManagerModel);
 			fileObj = new File(filePath, "fileManagerModel");
-			
 			Files.write(json.getBytes(), fileObj);
 			
 			return fileManagerModel;
@@ -70,6 +69,18 @@ public class FileManagerService implements IFileManager {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	@Override
+	public boolean checkFile(String uuid) {
+		String path = filePathPrefix + uuid;
+		File fileManagerModel = new File(path, "fileManagerModel");
+		File fileManagerUuid = new File(path, uuid);
+		if(fileManagerUuid.exists() && fileManagerUuid.isFile() && fileManagerModel.exists() && fileManagerModel.isFile()) {
+			return true;
+		}else {
+			return false;
+		}
 	}
 
 }
